@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"spiderxu.github.io","root":"/","scheme":"Gemini","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="优先队列普通的队列是一种先进先出的数据结构，元素在队列尾追加，而从队列头删除。在某些情况下，我们可能需要找出队列中的最大值或者最小值。普通的队列要完成这样的功能，需要每次遍历队列中的所有元素，比较并找出最大值，效率不是很高，这个时候我们就可以使用一种特殊的队列来完成这种需求，那就是优先队列 优先队列按照其作用不同，可以分为以下两种：最大优先队列：可以获取并删除队列中最大的值最小优先队列：可以获取并">
+<meta property="og:type" content="article">
+<meta property="og:title" content="优先队列">
+<meta property="og:url" content="https://spiderxu.github.io/2020/04/07/PriorityQueue/index.html">
+<meta property="og:site_name" content="新之助の博客">
+<meta property="og:description" content="优先队列普通的队列是一种先进先出的数据结构，元素在队列尾追加，而从队列头删除。在某些情况下，我们可能需要找出队列中的最大值或者最小值。普通的队列要完成这样的功能，需要每次遍历队列中的所有元素，比较并找出最大值，效率不是很高，这个时候我们就可以使用一种特殊的队列来完成这种需求，那就是优先队列 优先队列按照其作用不同，可以分为以下两种：最大优先队列：可以获取并删除队列中最大的值最小优先队列：可以获取并">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://spiderxu.github.io/images/PriorityQueue1.png">
+<meta property="og:image" content="https://spiderxu.github.io/images/PriorityQueue2.png">
+<meta property="og:image" content="https://spiderxu.github.io/images/PriorityQueue3.png">
+<meta property="article:published_time" content="2020-04-07T00:15:15.000Z">
+<meta property="article:modified_time" content="2020-04-07T01:12:09.590Z">
+<meta property="article:author" content="xuzhi">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="优先队列">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://spiderxu.github.io/images/PriorityQueue1.png">
+
+<link rel="canonical" href="https://spiderxu.github.io/2020/04/07/PriorityQueue/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>优先队列 | 新之助の博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">新之助の博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">记录点滴成长</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://spiderxu.github.io/2020/04/07/PriorityQueue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="xuzhi">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="新之助の博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          优先队列
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-04-07 08:15:15 / 修改时间：09:12:09" itemprop="dateCreated datePublished" datetime="2020-04-07T08:15:15+08:00">2020-04-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="优先队列"><a href="#优先队列" class="headerlink" title="优先队列"></a>优先队列</h2><p>普通的队列是一种先进先出的数据结构，元素在队列尾追加，而从队列头删除。在某些情况下，我们可能需要找出队列中的最大值或者最小值。普通的队列要完成这样的功能，需要每次遍历队列中的所有元素，比较并找出最大值，效率不是很高，这个时候我们就可以使用一种特殊的队列来完成这种需求，那就是优先队列</p>
+<p>优先队列按照其作用不同，可以分为以下两种：<br>最大优先队列：可以获取并删除队列中最大的值<br>最小优先队列：可以获取并删除队列中最小的值</p>
+<h3 id="最大优先队列"><a href="#最大优先队列" class="headerlink" title="最大优先队列"></a>最大优先队列</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//最大优先队列</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MaxPriorityQueue</span>&lt;<span class="title">T</span> <span class="keyword">extends</span> <span class="title">Comparable</span>&lt;<span class="title">T</span>&gt;&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">private</span> T[] items; <span class="comment">//存储堆中元素</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> N;  <span class="comment">//记录堆中元素个数</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//构造函数</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MaxPriorityQueue</span><span class="params">(<span class="keyword">int</span> capacity)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.items=(T[])<span class="keyword">new</span> Comparable[capacity+<span class="number">1</span>];</span><br><span class="line">        <span class="keyword">this</span>.N=<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取队列中元素的个数</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断队列是否为空</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N==<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断堆中索引i处的元素是否小于索引j处的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">less</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> items[i].compareTo(items[j])&lt;<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//交换索引i处和索引j处的值</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">exchange</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        T temp=items[i];</span><br><span class="line">        items[i]=items[j];</span><br><span class="line">        items[j]=temp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//往堆中插入一个元素</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(T t)</span></span>&#123;</span><br><span class="line">        items[++N]=t;</span><br><span class="line">        swim(N); <span class="comment">//上浮</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//删除堆中最大的元素，并且返回这个最大的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">delMax</span><span class="params">()</span></span>&#123;</span><br><span class="line">        T max=items[<span class="number">1</span>];</span><br><span class="line">        <span class="comment">//交换索引1和索引N处的值</span></span><br><span class="line">        exchange(<span class="number">1</span>,N);</span><br><span class="line">        <span class="comment">//删除最后位置上的元素</span></span><br><span class="line">        items[N]=<span class="keyword">null</span>;</span><br><span class="line">        N--;</span><br><span class="line">        sink(<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> max;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//上浮算法，使索引k处的元素能在堆中处于一个正确的值</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">swim</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (k&gt;<span class="number">1</span>)&#123;</span><br><span class="line">            <span class="comment">//比较当前结点和其父节点</span></span><br><span class="line">            <span class="keyword">if</span>(less(k/<span class="number">2</span>,k))&#123;</span><br><span class="line">                <span class="comment">//父节点小于子节点，交换</span></span><br><span class="line">                exchange(k/<span class="number">2</span>,k);</span><br><span class="line">            &#125;</span><br><span class="line">            k=k/<span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//下沉算法，使索引k处的元素能在堆中处于一个正确的位置</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sink</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="number">2</span>*k&lt;=N)&#123;</span><br><span class="line">            <span class="comment">//找到子节点中较大者</span></span><br><span class="line">            <span class="keyword">int</span> max=<span class="number">2</span>*k;</span><br><span class="line">            <span class="keyword">if</span>(<span class="number">2</span>*k+<span class="number">1</span>&lt;=N)&#123;  <span class="comment">//存在右子节点</span></span><br><span class="line">                <span class="keyword">if</span>(less(<span class="number">2</span>*k,<span class="number">2</span>*k+<span class="number">1</span>))&#123;</span><br><span class="line">                    max=<span class="number">2</span>*k+<span class="number">1</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(!less(k,max))&#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            exchange(k,max);</span><br><span class="line">            k=max;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.algorith.heap.MaxPriorityQueue;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MaxPriorityQueueTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        String[] arr = &#123;<span class="string">"S"</span>, <span class="string">"O"</span>, <span class="string">"R"</span>, <span class="string">"T"</span>, <span class="string">"E"</span>, <span class="string">"X"</span>, <span class="string">"A"</span>, <span class="string">"M"</span>, <span class="string">"P"</span>, <span class="string">"L"</span>, <span class="string">"E"</span>&#125;;</span><br><span class="line">        MaxPriorityQueue&lt;String&gt; maxpq = <span class="keyword">new</span> MaxPriorityQueue&lt;&gt;(<span class="number">20</span>);</span><br><span class="line">        <span class="keyword">for</span> (String s : arr) &#123;</span><br><span class="line">            maxpq.insert(s);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(maxpq.size());</span><br><span class="line">        String del;</span><br><span class="line">        <span class="keyword">while</span>(!maxpq.isEmpty())&#123;</span><br><span class="line">            del = maxpq.delMax();</span><br><span class="line">            System.out.print(del+<span class="string">","</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="最小优先队列"><a href="#最小优先队列" class="headerlink" title="最小优先队列"></a>最小优先队列</h3><p>特点：<br>1.最小的元素放在数组索引1处<br>2.每个结点的数据总是小于等于它的两个子结点的数据</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MinPriorityQueue</span>&lt;<span class="title">T</span> <span class="keyword">extends</span> <span class="title">Comparable</span>&lt;<span class="title">T</span>&gt;&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> T[] items; <span class="comment">//存储在堆中的元素</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> N; <span class="comment">//堆中元素个数</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MinPriorityQueue</span><span class="params">(<span class="keyword">int</span> capacity)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.items=(T[])<span class="keyword">new</span> Comparable[capacity+<span class="number">1</span>];</span><br><span class="line">        <span class="keyword">this</span>.N=<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取队列中元素的个数</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断队列的元素是否为空</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N==<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断堆中索引i处的元素是否小于j处的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">less</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> items[i].compareTo(items[j])&lt;<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//交换索引i处和索引j处的值</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">exchange</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        T temp=items[i];</span><br><span class="line">        items[i]=items[j];</span><br><span class="line">        items[j]=temp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//往堆中插入一个元素</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(T t)</span></span>&#123;</span><br><span class="line">        items[++N]=t;</span><br><span class="line">        swim(N); <span class="comment">//上浮</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">delMin</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="comment">//索引1处的值是最小值</span></span><br><span class="line">        T min=items[<span class="number">1</span>];</span><br><span class="line">        <span class="comment">//交换索引1处和索引N处的值</span></span><br><span class="line">        exchange(<span class="number">1</span>,N);</span><br><span class="line">        <span class="comment">//删除索引N处的值</span></span><br><span class="line">        items[N]=<span class="keyword">null</span>;</span><br><span class="line">        N--;</span><br><span class="line">        sink(<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> min;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">swim</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (k&gt;<span class="number">1</span>)&#123;</span><br><span class="line">            <span class="comment">//如果当前结点小于父节点</span></span><br><span class="line">            <span class="keyword">if</span>(less(k,k/<span class="number">2</span>))&#123;</span><br><span class="line">                exchange(k,k/<span class="number">2</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            k=k/<span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sink</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="number">2</span>*k&lt;=N)&#123;</span><br><span class="line">            <span class="comment">//找出子节点中较小的索引值</span></span><br><span class="line">            <span class="keyword">int</span> min=<span class="number">2</span>*k;</span><br><span class="line">            <span class="keyword">if</span>(<span class="number">2</span>*k+<span class="number">1</span>&lt;=N&amp;&amp;less(<span class="number">2</span>*k+<span class="number">1</span>,<span class="number">2</span>*k))&#123;</span><br><span class="line">                min=<span class="number">2</span>*k+<span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//如果当前结点小于子节点中的最小值</span></span><br><span class="line">            <span class="keyword">if</span>(less(k,min))&#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            exchange(k,min);</span><br><span class="line">            k=min;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.algorith.heap.MinPriorityQueue;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MinPriorityQueueTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        String[] arr = &#123;<span class="string">"S"</span>, <span class="string">"O"</span>, <span class="string">"R"</span>, <span class="string">"T"</span>, <span class="string">"E"</span>, <span class="string">"X"</span>, <span class="string">"A"</span>, <span class="string">"M"</span>, <span class="string">"P"</span>, <span class="string">"L"</span>, <span class="string">"E"</span>&#125;;</span><br><span class="line">       MinPriorityQueue&lt;String&gt; minpq = <span class="keyword">new</span> MinPriorityQueue&lt;&gt;(<span class="number">20</span>);</span><br><span class="line">        <span class="keyword">for</span> (String s : arr) &#123;</span><br><span class="line">            minpq.insert(s);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(minpq.size());</span><br><span class="line">        String del;</span><br><span class="line">        <span class="keyword">while</span>(!minpq.isEmpty())&#123;</span><br><span class="line">            del = minpq.delMin();</span><br><span class="line">            System.out.print(del+<span class="string">","</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="索引优先队列"><a href="#索引优先队列" class="headerlink" title="索引优先队列"></a>索引优先队列</h3><p>最大优先队列和最小优先队列，它们可以分别访问队列中最大元素和最小元素，但是它们有一个缺点，就是没办法通过索引访问已存在于优先队列中的对象，并更新它们。为了实现这个目的，则需要用到索引优先队列</p>
+<p>步骤一：<br>存储数据时，给每一个数据元素关联一个整数，例如insert(int k,T t)，我们可以看做k是t关联的<br>整数，那么我们的实现需要通过k这个值，快速获取到队列中t这个元素，此时有个k这个值需要具有唯一性。<br>最直观的想法就是我们可以用一个T[] items数组来保存数据元素，在insert(int k,T t)完成插入时，可以把k看做是items数组的索引，把t元素放到items数组的索引k处，这样我们再根据k获取元素t时就很方便了，直接就可以拿到items[k]即可。</p>
+<p><img src="/images/PriorityQueue1.png" alt="alt"></p>
+<p>步骤二：<br>步骤一完成后的结果，虽然我们给每个元素关联了一个整数，并且可以使用这个整数快速的获取到该元素，但是，items数组中的元素顺序是随机的，并不是堆有序的，所以，为了完成这个需求，我们可以增加一个数组int[]pq,来保存每个元素在items数组中的索引，pq数组需要堆有序，也就是说，<br>pq[1]对应的数据元素items[pq[1]]要小于等于pq[2]和pq[3]对应的数据元素items[pq[2]]和<br>items[pq[3]]。</p>
+<p><img src="/images/PriorityQueue2.png" alt="alt"></p>
+<p>步骤三：<br>通过步骤二的分析，我们可以发现，其实我们通过上浮和下沉做堆调整的时候，其实调整的是pq数组。如果需要<br>对items中的元素进行修改，比如让items[0]=“H”,那么很显然，我们需要对pq中的数据做堆调整，而且是调整<br>pq[9]中元素的位置。但现在就会遇到一个问题，我们修改的是items数组中0索引处的值，如何才能快速的知道需<br>要挑中pq[9]中元素的位置呢？<br>最直观的想法就是遍历pq数组，拿出每一个元素和0做比较，如果当前元素是0，那么调整该索引处的元素即可，<br>但是效率很低。<br>我们可以另外增加一个数组，int[] qp,用来存储pq的逆序。例如：<br>在pq数组中：pq[1]=6;<br>那么在qp数组中，把6作为索引，1作为值，结果是：qp[6]=1;</p>
+<p><img src="/images/PriorityQueue3.png" alt="alt"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">IndexMinPriorityQueue</span>&lt;<span class="title">T</span> <span class="keyword">extends</span> <span class="title">Comparable</span>&lt;<span class="title">T</span>&gt;&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> T[] items;  <span class="comment">//存储堆中的数据元素</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span>[] pq;  <span class="comment">//存储items数组元素的索引，pq数组需要堆有序</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span>[] qp;  <span class="comment">//qp数组的索引值对应pq数组存储的元素值</span></span><br><span class="line">                       <span class="comment">//qp数组存储的元素值对应pq数组的索引值</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> N;  <span class="comment">//堆中元素的个数</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">IndexMinPriorityQueue</span><span class="params">(<span class="keyword">int</span> capacity)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.items=(T[])<span class="keyword">new</span> Comparable[capacity+<span class="number">1</span>];</span><br><span class="line">        <span class="keyword">this</span>.pq=<span class="keyword">new</span> <span class="keyword">int</span>[capacity+<span class="number">1</span>];</span><br><span class="line">        <span class="keyword">this</span>.qp=<span class="keyword">new</span> <span class="keyword">int</span>[capacity+<span class="number">1</span>];</span><br><span class="line">        N=<span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; qp.length; i++) &#123;</span><br><span class="line">            <span class="comment">//默认情况下，qp逆序中不保存任何索引</span></span><br><span class="line">            qp[i]=-<span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取队列中元素的个数</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断队列是否为空</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> N==<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断堆中索引i处的元素是否小于索引j处的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">less</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> items[pq[i]].compareTo(items[pq[j]])&lt;<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//交换堆中i索引处和j索引处的值</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">exchange</span><span class="params">(<span class="keyword">int</span> i,<span class="keyword">int</span> j)</span></span>&#123;</span><br><span class="line">        <span class="comment">//交换pq数组中的值</span></span><br><span class="line">        <span class="keyword">int</span> temp=pq[i];</span><br><span class="line">        pq[i]=pq[j];</span><br><span class="line">        pq[j]=temp;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//更新qp数组中的值</span></span><br><span class="line">        qp[pq[i]]=i;</span><br><span class="line">        qp[pq[j]]=j;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//判断k对应的元素是否存在</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">contains</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="comment">//默认情况下,qb所有元素都为-1，如果某个位置插入了数据，则不为-1</span></span><br><span class="line">        <span class="keyword">return</span> qp[k]!=-<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//最小关联索引</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">minIndex</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="comment">//pq的索引1处，存放的是最小元素在items的索引</span></span><br><span class="line">        <span class="keyword">return</span> pq[<span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//往队列中插入一个元素，并关联索引i</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(<span class="keyword">int</span> i,T t)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(contains(i))&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"该索引已存在"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//个数加1</span></span><br><span class="line">        N++;</span><br><span class="line">        <span class="comment">//把元素放到item数组中</span></span><br><span class="line">        items[i]=t;</span><br><span class="line">        <span class="comment">//使用pq存放这个索引</span></span><br><span class="line">        pq[N]=i;</span><br><span class="line">        <span class="comment">//在qp的i索引处存放N</span></span><br><span class="line">        qp[i]=N;</span><br><span class="line">        <span class="comment">//上浮items[pq[N]],让pq堆有序</span></span><br><span class="line">        swim(N);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//删除队列中最小元素，并返回该元素的关联索引</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">delMin</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="comment">//找到items中最小元素的索引</span></span><br><span class="line">        <span class="keyword">int</span> minIndex=pq[<span class="number">1</span>];</span><br><span class="line">        <span class="comment">//交换索引1和N的值</span></span><br><span class="line">        exchange(<span class="number">1</span>,N);</span><br><span class="line">        <span class="comment">//删除qp中索引为pq[N]的值</span></span><br><span class="line">        qp[pq[N]]=-<span class="number">1</span>;</span><br><span class="line">        <span class="comment">//删除pq索引N处的值</span></span><br><span class="line">        pq[N]=-<span class="number">1</span>;</span><br><span class="line">        <span class="comment">//删除items中最小元素</span></span><br><span class="line">        items[minIndex]=<span class="keyword">null</span>;</span><br><span class="line">        N--;</span><br><span class="line">        sink(<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> minIndex;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//删除索引i关联的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(<span class="keyword">int</span> i)</span></span>&#123;</span><br><span class="line">        <span class="comment">//找出i在pq中的索引</span></span><br><span class="line">        <span class="keyword">int</span> k=qp[i];</span><br><span class="line">        <span class="comment">//吧pq中索引K处的值和索引N处的值交换</span></span><br><span class="line">        exchange(k,N);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//删除qp中pq[N]的值</span></span><br><span class="line">        qp[pq[N]]=-<span class="number">1</span>;</span><br><span class="line">        <span class="comment">//删除pq中索引N处的值</span></span><br><span class="line">        pq[N]=-<span class="number">1</span>;</span><br><span class="line">        <span class="comment">//删除item中索引i的值</span></span><br><span class="line">        items[i]=<span class="keyword">null</span>;</span><br><span class="line">        N--;</span><br><span class="line">        sink(k);</span><br><span class="line">        swim(k);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//把与索引i关联的元素修改为t</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">changeItem</span><span class="params">(<span class="keyword">int</span> i,T t)</span></span>&#123;</span><br><span class="line">        <span class="comment">//修改items数组中索引i处的值</span></span><br><span class="line">        items[i]=t;</span><br><span class="line">        <span class="comment">//找到i在pq中的位置</span></span><br><span class="line">        <span class="keyword">int</span> k=qp[i];</span><br><span class="line">        sink(k);</span><br><span class="line">        swim(k);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//上浮算法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">swim</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (k&gt;<span class="number">1</span>)&#123;</span><br><span class="line">            <span class="comment">//比较当前结点和父节点，如果当前结点比父节点小，交换位置</span></span><br><span class="line">            <span class="keyword">if</span>(less(k,k/<span class="number">2</span>))&#123;</span><br><span class="line">                exchange(k,k/<span class="number">2</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            k=k/<span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//下沉算法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sink</span><span class="params">(<span class="keyword">int</span> k)</span></span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="number">2</span>*k&lt;=N)&#123;</span><br><span class="line">            <span class="comment">//找出子节点中较小的值</span></span><br><span class="line">            <span class="keyword">int</span> min=<span class="number">2</span>*k;</span><br><span class="line">            <span class="keyword">if</span>(<span class="number">2</span>*k+<span class="number">1</span>&lt;=N&amp;&amp;less(<span class="number">2</span>*k+<span class="number">1</span>,<span class="number">2</span>*k))&#123;</span><br><span class="line">                min=<span class="number">2</span>*k;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//如果当前结点比子节点的较小值小，结束下沉</span></span><br><span class="line">            <span class="keyword">if</span>(less(k,min))&#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            exchange(k,min);</span><br><span class="line">            k=min;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        String[] arr = &#123;<span class="string">"S"</span>, <span class="string">"O"</span>, <span class="string">"R"</span>, <span class="string">"T"</span>, <span class="string">"E"</span>, <span class="string">"X"</span>, <span class="string">"A"</span>, <span class="string">"M"</span>, <span class="string">"P"</span>, <span class="string">"L"</span>, <span class="string">"E"</span>&#125;;</span><br><span class="line">        IndexMinPriorityQueue&lt;String&gt; indexMinPQ = <span class="keyword">new</span> IndexMinPriorityQueue&lt;&gt;(<span class="number">20</span>);</span><br><span class="line"><span class="comment">//插入</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arr.length; i++) &#123;</span><br><span class="line">            indexMinPQ.insert(i,arr[i]);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(indexMinPQ.size());</span><br><span class="line"><span class="comment">//获取最小值的索引</span></span><br><span class="line">        System.out.println(indexMinPQ.minIndex());</span><br><span class="line"><span class="comment">//测试修改</span></span><br><span class="line">        indexMinPQ.changeItem(<span class="number">0</span>,<span class="string">"Z"</span>);</span><br><span class="line">        <span class="keyword">int</span> minIndex=-<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span>(!indexMinPQ.isEmpty())&#123;</span><br><span class="line">            minIndex = indexMinPQ.delMin();</span><br><span class="line">            System.out.print(minIndex+<span class="string">","</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/java/" rel="tag"># java</a>
+              <a href="/tags/%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97/" rel="tag"># 优先队列</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/03/Heap/" rel="prev" title="堆">
+      <i class="fa fa-chevron-left"></i> 堆
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/07/RedBlackTree/" rel="next" title="红黑树">
+      红黑树 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#优先队列"><span class="nav-number">1.</span> <span class="nav-text">优先队列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#最大优先队列"><span class="nav-number">1.1.</span> <span class="nav-text">最大优先队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最小优先队列"><span class="nav-number">1.2.</span> <span class="nav-text">最小优先队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#索引优先队列"><span class="nav-number">1.3.</span> <span class="nav-text">索引优先队列</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xuzhi"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">xuzhi</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xuzhi</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.1
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+  
+<script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
