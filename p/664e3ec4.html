@@ -1,0 +1,1219 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="MySQL索引原理深入解析, lamdaxuの博客">
+    <meta name="description" content="前言数据库的索引我们都不陌生，那么索引是什么呢？官方给出的答案是，索引是数据库管理系统中一个排序的数据结构，以协助快速查询更新表中的数据。那么索引究竟是一种什么样的数据结构呢。我们来一起了解一下吧。
+索引数据结构推演二分查找二分查找也叫折半">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>MySQL索引原理深入解析 | lamdaxuの博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+
+
+    <!-- bg-cover style     -->
+
+
+
+<link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+<link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+<link rel="stylesheet" type="text/css" href="/css/matery.css">
+<link rel="stylesheet" type="text/css" href="/css/my.css">
+<link rel="stylesheet" type="text/css" href="/css/dark.css" media="none" onload="if(media!='all')media='all'">
+
+
+
+
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+    <link rel="stylesheet" href="/css/post.css">
+
+
+
+
+    
+        <link rel="stylesheet" type="text/css" href="/css/reward.css">
+    
+
+
+
+    <script src="/libs/jquery/jquery-3.6.0.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">lamdaxuの博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/friends" class="waves-effect waves-light">
+      
+      <i class="fas fa-address-book" style="zoom: 0.6;"></i>
+      
+      <span>友情链接</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/navigate" class="waves-effect waves-light">
+      
+      <i class="fas fa-location-arrow" style="zoom: 0.6;"></i>
+      
+      <span>导航页</span>
+    </a>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+  <li>
+    <a href="javascript:;" class="waves-effect waves-light" onclick="switchNightMode()" title="深色/浅色模式" >
+      <i id="sum-moon-icon" class="fas fa-sun" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">lamdaxuの博客</div>
+        <div class="logo-desc">
+            
+            Never really desperate, only the lost of the soul.
+            
+        </div>
+    </div>
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/friends" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-address-book"></i>
+			
+			友情链接
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/navigate" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-location-arrow"></i>
+			
+			导航页
+		</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/blinkfox/hexo-theme-matery" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/blinkfox/hexo-theme-matery" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/11.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">MySQL索引原理深入解析</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/MySQL/">
+                                <span class="chip bg-color">MySQL</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-category">
+                                数据库
+                            </a>
+                        
+                            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/" class="post-category">
+                                MySQL
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2024-03-31
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    7.4k
+                </div>
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    27 分
+                </div>
+                
+
+                
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>数据库的索引我们都不陌生，那么索引是什么呢？官方给出的答案是，索引是数据库管理系统中一个排序的数据结构，以协助快速查询更新表中的数据。那么索引究竟是一种什么样的数据结构呢。我们来一起了解一下吧。</p>
+<h2 id="索引数据结构推演"><a href="#索引数据结构推演" class="headerlink" title="索引数据结构推演"></a>索引数据结构推演</h2><h3 id="二分查找"><a href="#二分查找" class="headerlink" title="二分查找"></a>二分查找</h3><p>二分查找也叫折半查找。这个相信大家都不陌生。使用二分查找，我们每次都会把候选数据筛除一般，当然了，前提是这个数据已经排过序。</p>
+<p>所以，我们首先可以想到使用有序数组来作为索引的数据结构。有序数组的等值查询和比较查询效率非常高，但是更新数据的时候会出现问题，可能会挪动大量的数据。所以只适合存储静态数据。</p>
+<p>那么，为了解决这个问题，我们可以采用链表作为索引的数据结构来支持数据的更新操作。但如果是单链表的话，那它的查询效率就掉下来了。</p>
+<p>那有没有可以使用二分查找的链表呢？这里就是我们所说的二叉查找树。</p>
+<h3 id="二叉查找树"><a href="#二叉查找树" class="headerlink" title="二叉查找树"></a>二叉查找树</h3><p>二分查找树(BST Binary Search Tree)。<br>首先，二分查找树的特点：<br>左子树所有的节点都小于父节点，右子树所有的节点都大于父节点。投影到平面以后，这就是一个有序的线性表。<br><img src="/images/database/mysql/3-1.png"></p>
+<p>二叉查找树既能够实现快速查找，又能够实现快速插入。<br>但是二叉查找树有一个问题：<br>就是它的查找耗时是和这棵树的深度相关的，在最坏的情况下时间复杂度会退化成O(n)。</p>
+<p>那什么情况是最坏的情况呢？<br>比如说，我们插入的数据是有序的，2,6,11,13,17,22。那么这个时候，我们的二叉树就变成了链表。这种情况下是不能达到加快检索速度的目的的。<br><img src="/images/database/mysql/3-2.png"><br>正是因为二叉查找树的这一缺点。那么有没有什么更好的方法呢。这个就是平衡二叉树。</p>
+<h3 id="平衡二叉树"><a href="#平衡二叉树" class="headerlink" title="平衡二叉树"></a>平衡二叉树</h3><p>平衡二叉树的定义：左右子树深度差绝对值不能超过1。<br>我们按照顺序插入1,2,3,4,5,6，就会变成下面这个树。<br><img src="/images/database/mysql/3-3.png"></p>
+<p>那么，平衡二叉树是怎么保证左右子树的深度差不能超过1呢？<br>我们插入1,2,3之后，按照二叉查找树的定义，3肯定是在2的右边的，这个时候根节点1的右子树深度会变成2，但是左子树的深度为0。这就违反了平衡二叉树的定义。</p>
+<p>这个时候，平衡二叉树会做一个左旋的操作。<br><img src="/images/database/mysql/3-4.png"><br>如果我们插入7，6，5。平衡二叉树会发生右旋操作。<br><img src="/images/database/mysql/3-5.png"><br>为了保持平衡，平衡二叉树在插入和更新数据的时候执行了一系列的计算和调整操作。平衡问题解决了，那么平衡二叉树作为索引如何查询数据？</p>
+<p>在平衡二叉树中，一个节点，它的大小是一个固定的单位，作为索引应该存储什么内容？</p>
+<p>它应该存储三块的内容：<br>第一个是索引的键值。比如我们在id上面创建了一个索引，我们在用where id =1 的条件查询的时候就会找到索引里面的id的这个键值。<br>第二个是数据的磁盘地址，因为索引的作用就是查找数据的存放地址<br>第三个，由于是二叉树，它必须还要有左子节点和右子节点的引用，这样我们才能找到下一个节点，比如大于26的时候，走右边，到下一个树的节点，继续判断。</p>
+<p>这样存储数据，会存在问题。我们来看看会出现什么问题？在此，我们需要先了解一下InnoDB存储引擎的逻辑存储结构。</p>
+<h4 id="InnoDB逻辑存储结构"><a href="#InnoDB逻辑存储结构" class="headerlink" title="InnoDB逻辑存储结构"></a>InnoDB逻辑存储结构</h4><p>MySQL的存储结构分为5级：表结构、段、簇、页、行。<br><img src="/images/database/mysql/3-6.png"></p>
+<p><strong>表空间 Table Space</strong><br>表空间可以看做是 InnoDB 存储引擎逻辑结构的最高层，所有的数据都存放在表空间中。分为：系统表空间、独占表空间、通用表空间、临时表空间、Undo 表空间。</p>
+<p><strong>段 Segment</strong><br>表空间是由各个段组成的，常见的段有数据段、索引段、回滚段等，段是一个逻辑的概念。一个 ibd 文件（独立表空间文件）里面会由很多个段组成。</p>
+<p>创建一个索引会创建两个段，一个是索引段：leaf node segment，一个是数据段：non-leaf node segment。索引段管理非叶子节点的数据。数据段管理叶子节点的数据。也就是说，一个表的段数，就是索引的个数乘以 2</p>
+<p><strong>簇 Extent</strong><br>一个段（Segment）又由很多的簇（也可以叫区）组成，每个区的大小是 1MB（64<br>个连续的页）。</p>
+<p>每一个段至少会有一个簇，一个段所管理的空间大小是无限的，可以一直扩展下去，<br>但是扩展的最小单位就是簇。</p>
+<p><strong>页 Page</strong><br>为了高效管理物理空间，对簇进一步细分，就得到了页。簇是由连续的页（Page）<br>组成的空间，一个簇中有 64 个连续的页。 （1MB／16KB=64）。这些页面在物理上和<br>逻辑上都是连续的。</p>
+<p>跟大多数数据库一样，InnoDB 也有页的概念（也可以称为块），每个页默认 16KB。<br>页是 InnoDB 存储引擎磁盘管理的最小单位，通过 innodb_page_size 设置。</p>
+<p>一个表空间最多拥有 2^32 个页，默认情况下一个页的大小为 16KB，也就是说一个<br>表空间最多存储 64TB 的数</p>
+<p>注意，文件系统中，也有页的概念。<br>操作系统和内存打交道，最小的单位是页 Page。文件系统的内存页通常是 4K。<br><img src="/images/database/mysql/3-7.png"></p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">SHOW</span> VARIABLES <span class="token operator">LIKE</span> <span class="token string">'innodb_page_size'</span><span class="token punctuation">;</span></code></pre>
+<p>假设一行数据大小是 1K，那么一个数据页可以放 16 行这样的数据。<br>举例：一个页放 3 行数据<br><img src="/images/database/mysql/3-8.png"><br>往表中插入数据时，如果一个页面已经写完，产生一个新的叶页面。如果一个簇的所有的页面都被用完，会从当前页面所在段新分配一个簇。<br>如果数据不是连续的，往已经写满的页中插入数据，会导致叶页面分裂：<br><img src="/images/database/mysql/3-9.png"></p>
+<p><strong>行 Row</strong><br>这里不做过多的介绍。</p>
+<h4 id="多路平衡查找树-B-Tree-分裂、合并"><a href="#多路平衡查找树-B-Tree-分裂、合并" class="headerlink" title="多路平衡查找树(B Tree)(分裂、合并)"></a>多路平衡查找树(B Tree)(分裂、合并)</h4><p>这个就是我们的多路平衡查找树，叫做 B Tree（B 代表平衡）。<br>跟 AVL 树一样，B 树在枝节点和叶子节点存储键值、数据地址、节点引用。<br>它有一个特点：分叉数（路数）永远比关键字数多 1。比如我们画的这棵树，每个节点存储两个关键字，那么就会有三个指针指向三个子节点。<br><img src="/images/database/mysql/3-10.png"></p>
+<p>B Tree 的查找规则是什么样的呢？<br>比如我们要在这张表里面查找 15。<br>因为 15 小于 17，走左边。<br>因为 15 大于 12，走右边。<br>在磁盘块 7 里面就找到了 15，只用了 3 次 IO。<br>这个是不是比 AVL 树效率更高呢？<br>那 B Tree 又是怎么实现一个节点存储多个关键字，还保持平衡的呢？跟 AVL 树有什<br>么区别？</p>
+<p>比如 Max Degree（路数）是 3 的时候，我们插入数据 1、2、3，在插入 3 的时候，<br>本来应该在第一个磁盘块，但是如果一个节点有三个关键字的时候，意味着有 4 个指针，<br>子节点会变成 4 路，所以这个时候必须进行分裂。把中间的数据 2 提上去，把 1 和 3 变<br>成 2 的子节点。</p>
+<p>如果删除节点，会有相反的合并的操作。注意这里是分裂和合并，跟 AVL 树的左旋和右旋是不一样的。我们继续插入 4 和 5，B Tree 又会出现分裂和合并的操作<br><img src="/images/database/mysql/3-11.png"><br>从这个里面我们也能看到，在更新索引的时候会有大量的索引的结构的调整，所以解释了为什么我们不要在频繁更新的列上建索引，或者为什么不要更新主键。节点的分裂和合并，其实就是 InnoDB 页的分裂和合并。</p>
+<h3 id="B-树"><a href="#B-树" class="headerlink" title="B+树"></a>B+树</h3><p>B Tree 的效率已经很高了，为什么 MySQL 还要对 B Tree 进行改良，最终使用了<br>B+Tree 呢？<br>总体上来说，这个 B 树的改良版本解决的问题比 B Tree 更全面。<br>我们来看一下 InnoDB 里面的 B+树的存储结构。<br><img src="/images/database/mysql/3-12.png"><br>MySQL 中的 B+Tree 有几个特点：<br>1、它的关键字的数量是跟路数相等的；<br>2、B+Tree 的根节点和枝节点中都不会存储数据，只有叶子节点才存储数据。搜索<br>到关键字不会直接返回，会到最后一层的叶子节点。比如我们搜索 id=28，虽然在第一<br>层直接命中了，但是全部的数据在叶子节点上面，所以我还要继续往下搜索，一直到叶<br>子节点。<br>举个例子：假设一条记录是 1K，一个叶子节点（一页）可以存储 16 条记录。非叶<br>子节点可以存储多少个指针？<br>假设索引字段是 bigint 类型，长度为 8 字节。指针大小在 InnoDB 源码中设置为<br>6 字节，这样一共 14 字节。非叶子节点（一页）可以存储 16384/14=1170 个这样的<br>单元（键值+指针），代表有 1170 个指针。<br>树 深 度 为 2 的 时 候 ， 有 1170^2 个 叶 子 节 点 ， 可 以 存 储 的 数 据 为<br>1170<em>1170</em>16=21902400。</p>
+<p><img src="/images/database/mysql/3-13.png"><br>在查找数据时一次页的查找代表一次 IO，也就是说，一张 2000 万左右的表，查询<br>数据最多需要访问 3 次磁盘。<br>所以在 InnoDB 中 B+ 树深度一般为 1-3 层，它就能满足千万级的数据存储。<br>3、B+Tree 的每个叶子节点增加了一个指向相邻叶子节点的指针，它的最后一个数<br>据会指向下一个叶子节点的第一个数据，形成了一个有序链表的结构。<br>4、它是根据左闭右开的区间 [ )来检索数据。<br>我们来看一下 B+Tree 的数据搜寻过程：<br>1）比如我们要查找 28，在根节点就找到了键值，但是因为它不是页子节点，所以<br>会继续往下搜寻，28 是[28,66)的左闭右开的区间的临界值，所以会走中间的子节点，然<br>后继续搜索，它又是[28,34)的左闭右开的区间的临界值，所以会走左边的子节点，最后<br>在叶子节点上找到了需要的数据。<br>2）第二个，如果是范围查询，比如要查询从 22 到 60 的数据，当找到 22 之后，只<br>需要顺着节点和指针顺序遍历就可以一次性访问到所有的数据节点，这样就极大地提高<br>了区间查询效率（不需要返回上层父节点重复遍历查找）。<br>总结一下，InnoDB 中的 B+Tree 的特点：<br>1)它是 B Tree 的变种，B Tree 能解决的问题，它都能解决。B Tree 解决的两大问题<br>是什么？（每个节点存储更多关键字；路数更多）<br>2)扫库、扫表能力更强（如果我们要对表进行全表扫描，只需要遍历叶子节点就可以<br>了，不需要遍历整棵 B+Tree 拿到所有的数据）<br>3) B+Tree 的磁盘读写能力相对于 B Tree 来说更强（根节点和枝节点不保存数据区，<br>所以一个节点可以保存更多的关键字，一次磁盘加载的关键字更多）<br>4)排序能力更强（因为叶子节点上有下一个数据区的指针，数据形成了链表）<br>5)效率更加稳定（B+Tree 永远是在叶子节点拿到数据，所以 IO 次数是稳定的）</p>
+<h3 id="为什么不用红黑树"><a href="#为什么不用红黑树" class="headerlink" title="为什么不用红黑树"></a>为什么不用红黑树</h3><p>红黑树也是 BST 树，但是不是严格平衡的。<br>必须满足 5 个约束：<br>1、节点分为红色或者黑色。<br>2、根节点必须是黑色的。<br>3、叶子节点都是黑色的 NULL 节点。<br>4、红色节点的两个子节点都是黑色（不允许两个相邻的红色节点）。<br>5、从任意节点出发，到其每个叶子节点的路径中包含相同数量的黑色节点。<br>插入：60、56、68、45、64、58、72、43、49<br><img src="/images/database/mysql/3-14.png"><br>基于以上规则，可以推导出：<br>从根节点到叶子节点的最长路径（红黑相间的路径）不大于最短路径（全部是黑色<br>节点）的 2 倍。<br>为什么不用红黑树？1、只有两路；2、不够平衡。<br>红黑树一般只放在内存里面用。例如 Java 的 TreeMap。</p>
+<h3 id="索引方式：真的是用的B-Tree吗？"><a href="#索引方式：真的是用的B-Tree吗？" class="headerlink" title="索引方式：真的是用的B+Tree吗？"></a>索引方式：真的是用的B+Tree吗？</h3><p>在 Navicat 的工具中，创建索引，索引方式有两种，Hash 和 B Tree。<br>HASH：以 KV 的形式检索数据，也就是说，它会根据索引字段生成哈希码和指针，<br>指针指向数据。</p>
+<p><img src="/images/database/mysql/3-15.png"><br>哈希索引有什么特点呢？<br>第一个，它的时间复杂度是 O(1)，查询速度比较快。因为哈希索引里面的数据不是<br>按顺序存储的，所以不能用于排序。<br>第二个，我们在查询数据的时候要根据键值计算哈希码，所以它只能支持等值查询<br>（= IN），不支持范围查询（&gt; &lt; &gt;= &lt;= between and）。<br>另外一个就是如果字段重复值很多的时候，会出现大量的哈希冲突（采用拉链法解<br>决），效率会降低</p>
+<p><strong>问题：InnoDB 可以在客户端创建一个索引，使用哈希索引吗？</strong><br>直接翻译过来就是：InnoDB 内部使用哈希索引来实现自适应哈希索引特性。<br>这句话的意思是 InnoDB 只支持显式创建 B+Tree 索引，对于一些热点数据页，<br>InnoDB 会自动建立自适应 Hash 索引，也就是在 B+Tree 索引基础上建立 Hash 索引，<br>这个过程对于客户端是不可控制的，隐式的。<br>我们在 Navicat 工具里面选择索引方法是哈希，但是它创建的还是 B+Tree 索引，这<br>个不是我们可以手动控制的。<br>上次课我们说到 buffer pool 里面有一块区域是 Adaptive Hash Index 自适应哈希<br>索引，就是这个。<br>这个开关默认是 ON：</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> variables <span class="token operator">like</span> <span class="token string">'innodb_adaptive_hash_index'</span><span class="token punctuation">;</span></code></pre>
+
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> <span class="token keyword">engine</span> <span class="token keyword">innodb</span> <span class="token keyword">status</span>\G</code></pre>
+
+<p><img src="/images/database/mysql/3-16.png"><br>因为B Tree 和B+Tree 的特性，它们广泛地用在文件系统和数据库中，例如Windows<br>的 HPFS 文件系统，Oracel、MySQL、SQLServer 数据库</p>
+<h2 id="B-Tree落地形式"><a href="#B-Tree落地形式" class="headerlink" title="B+Tree落地形式"></a>B+Tree落地形式</h2><h3 id="MYSQL架构"><a href="#MYSQL架构" class="headerlink" title="MYSQL架构"></a>MYSQL架构</h3><p>MySQL 是一个支持插件式存储引擎的数据库。在 MySQL里面，每个表在创建的时候都可以指定它所使用的存储引擎。这里我们主要关注一下最常用的两个存储引擎，MyISAM 和 InnoDB 的索引的实现</p>
+<h3 id="MYSQL数据存储文件"><a href="#MYSQL数据存储文件" class="headerlink" title="MYSQL数据存储文件"></a>MYSQL数据存储文件</h3><p>首先，MySQL 的数据都是文件的形式存放在磁盘中的，我们可以找到这个数据目录<br>的地址。在 MySQL 中有这么一个参数，我们来看一下：</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> VARIABLES <span class="token operator">LIKE</span> <span class="token string">'datadir'</span><span class="token punctuation">;</span></code></pre>
+<p>每个数据库有一个目录，我们新建了一个叫做 gupao 的数据库，那么这里就有一个<br>gupao 的文件夹。<br>这个数据库里面我们又建了 5 张表：archive、innodb、memory、myisam、csv。<br>我们进入 gupao 的目录，发现这里面有一些跟我们创建的表名对应的文件。</p>
+<p>在这里我们能看到，每张 InnoDB 的表有两个文件（.frm 和.ibd），MyISAM 的表<br>有三个文件（.frm、.MYD、.MYI）。<br><img src="/images/database/mysql/3-17.png"><br>有一个是相同的文件，.frm。 .frm 是 MySQL 里面表结构定义的文件，不管你建表<br>的时候选用任何一个存储引擎都会生成。<br>我们主要看一下其他两个文件是怎么实现 MySQL 不同的存储引擎的索引的。</p>
+<h4 id="MyISAM"><a href="#MyISAM" class="headerlink" title="MyISAM"></a>MyISAM</h4><p>在 MyISAM 里面，另外有两个文件：<br>一个是.MYD 文件，D 代表 Data，是 MyISAM 的数据文件，存放数据记录，比如我<br>们的 user_myisam 表的所有的表数据。<br>一个是.MYI 文件，I 代表 Index，是 MyISAM 的索引文件，存放索引，比如我们在<br>id 字段上面创建了一个主键索引，那么主键索引就是在这个索引文件里面。<br>也就是说，在 MyISAM 里面，索引和数据是两个独立的文件。<br>那我们怎么根据索引找到数据呢？<br>MyISAM 的 B+Tree 里面，叶子节点存储的是数据文件对应的磁盘地址。所以从索<br>引文件.MYI 中找到键值后，会到数据文件.MYD 中获取相应的数据记录<br><img src="/images/database/mysql/3-18.png"><br>这里是主键索引，如果是辅助索引，有什么不一样呢？<br>在 MyISAM 里面，辅助索引也在这个.MYI 文件里面。<br>辅助索引跟主键索引存储和检索数据的方式是没有任何区别的，一样是在索引文件<br>里面找到磁盘地址，然后到数据文件里面获取数据。<br><img src="/images/database/mysql/3-19.png"></p>
+<h4 id="InnoDB"><a href="#InnoDB" class="headerlink" title="InnoDB"></a>InnoDB</h4><p>InnoDB 只有一个文件（.ibd 文件），那索引放在哪里呢？<br>在 InnoDB 里面，它是以主键为索引来组织数据的存储的，所以索引文件和数据文<br>件是同一个文件，都在.ibd 文件里面。<br>在 InnoDB 的主键索引的叶子节点上，它直接存储了我们的数据。<br><img src="/images/database/mysql/3-20.png"><br>什么叫做聚集索引（聚簇索引）？<br>就是索引键值的逻辑顺序跟表数据行的物理存储顺序是一致的。（比如字典的目录<br>是按拼音排序的，内容也是按拼音排序的，按拼音排序的这种目录就叫聚集索引）。<br>在 InnoDB 里面，它组织数据的方式叫做叫做（聚集）索引组织表（clustered index<br>organize table），所以主键索引是聚集索引，非主键都是非聚集索引。<br>如果 InnoDB 里面主键是这样存储的，那主键之外的索引，比如我们在 name 字段<br>上面建的普通索引，又是怎么存储和检索数据的呢？<br><img src="/images/database/mysql/3-21.png"><br>InnoDB 中，主键索引和辅助索引是有一个主次之分的。<br>辅助索引存储的是辅助索引和主键值。如果使用辅助索引查询，会根据主键值在主<br>键索引中查询，最终取得数据。<br>比如我们用 name 索引查询 name= ‘青山’，它会在叶子节点找到主键值，也就是<br>id=1，然后再到主键索引的叶子节点拿到数据。<br>为什么在辅助索引里面存储的是主键值而不是主键的磁盘地址呢？如果主键的数据<br>类型比较大，是不是比存地址更消耗空间呢？<br>我们前面说到 B Tree 是怎么实现一个节点存储多个关键字，还保持平衡的呢？<br>是因为有分叉和合并的操作，这个时候键值的地址会发生变化，所以在辅助索引里<br>面不能存储地址。<br>另一个问题，如果一张表没有主键怎么办？<br>1、如果我们定义了主键(PRIMARY KEY)，那么 InnoDB 会选择主键作为聚集索引。<br>2、如果没有显式定义主键，则 InnoDB 会选择第一个不包含有 NULL 值的唯一索引<br>作为主键索引。<br>3、如果也没有这样的唯一索引，则 InnoDB 会选择内置 6 字节长的 ROWID 作为隐<br>藏的聚集索引，它会随着行记录的写入而主键递增</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">select</span> _rowid name <span class="token keyword">from</span> t2<span class="token punctuation">;</span></code></pre>
+
+<h2 id="索引使用原则"><a href="#索引使用原则" class="headerlink" title="索引使用原则"></a>索引使用原则</h2><p>很多人认为既然索引能够提高我们SQL语句的查询效率，那么我们是不是在经常使用的查询条件上建立索引，索引越多越好。是不是这样的呢？</p>
+<h3 id="列的散列度"><a href="#列的散列度" class="headerlink" title="列的散列度"></a>列的散列度</h3><p>我们首先说说列的散列度。列的散列度公式：count(distinct(column_name)) : count(*),列的全部不同值和所有数据行的比例。数据行数相同的情况下，分子越大，列的散列度就越高。<br><img src="/images/database/mysql/3-22.png"><br>简单的理解，就是列的重复值越多，散列度就越低，重复值越小，散列度就越高。<br>了解散列度概念，我们name上面建立索引和gender上面会有怎样的区别。</p>
+<p>当我们用在gender上面建立的索引去检索数据的时候，由于重复值太多，需要扫描的行数也就更多。我们现在在gender上面创建一个索引，然后看一下执行计划</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">DROP</span> <span class="token keyword">INDEX</span> idx_user_gender<span class="token punctuation">;</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">ADD</span> <span class="token keyword">INDEX</span> idx_user_gender <span class="token punctuation">(</span>gender<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">-- 耗时比较久</span>
+<span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">`</span>user_innodb<span class="token punctuation">`</span> <span class="token keyword">WHERE</span> gender <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-23.png"></p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> indexes <span class="token keyword">from</span> user_innodb<span class="token punctuation">;</span></code></pre>
+<p>name的离散度更高，比如我们查询一个名字，只需要扫描一行。</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">DROP</span> <span class="token keyword">INDEX</span> idx_user_name<span class="token punctuation">;</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">ADD</span> <span class="token keyword">INDEX</span> idx_user_name <span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">`</span>user_innodb<span class="token punctuation">`</span> <span class="token keyword">WHERE</span> name <span class="token operator">=</span> <span class="token string">'青山'</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-24.png"></p>
+<p>我们可以执行以下SQL语句来查看以下索引的基数。索引的基数与表的总行数越接近，列的散列度就越高。</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> indexes <span class="token keyword">from</span> user_innodb<span class="token punctuation">;</span></code></pre>
+
+<p>如果在B+Tree里面的重复值太多，MYSQL的优化器发现走索引和走全表扫描差不多的时候，就算建立的了索引。也不一定会走索引的。<br><img src="/images/database/mysql/3-25.png"></p>
+<p>这也就说明，建立索引，要是用离散度高的字段。</p>
+<h3 id="联合索引最左匹配原则"><a href="#联合索引最左匹配原则" class="headerlink" title="联合索引最左匹配原则"></a>联合索引最左匹配原则</h3><p>前面我们说的都是针对单列创建的索引，但有的时候我们的多条件查询的时候，也会建立联合索引。单列索引可以看成是特殊的联合索引。比如我们在 user 表上面，给 name 和 phone 建立了一个联合索引</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">DROP</span> <span class="token keyword">INDEX</span> comidx_name_phone<span class="token punctuation">;</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">add</span> <span class="token keyword">INDEX</span> comidx_name_phone <span class="token punctuation">(</span>name<span class="token punctuation">,</span>phone<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-26.png"><br>联合索引在 B+Tree 中是复合的数据结构，它是按照从左到右的顺序来建立搜索树的（name 在左边，phone 在右边）。</p>
+<p>从这张图可以看出来，name 是有序的，phone 是无序的。当 name 相等的时候，phone 才是有序的。</p>
+<p>这个时候我们使用 where name= ‘青山’ and phone = ‘136xx ‘去查询数据的时候，B+Tree 会优先比较 name 来确定下一步应该搜索的方向，往左还是往右。如果 name相同的时候再比较phone。但是如果查询条件没有 name，就不知道第一步应该查哪个节点，因为建立搜索树的时候 name 是第一个比较因子，所以用不到索引。</p>
+<h4 id="什么时候用到联合索引"><a href="#什么时候用到联合索引" class="headerlink" title="什么时候用到联合索引"></a>什么时候用到联合索引</h4><p>我们在建立联合索引的时候，一定要把最常用的列放在最左边。比如下面的三条语句，能用到联合索引吗？</p>
+<p>1）使用两个字段，可以用到联合索引</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> name<span class="token operator">=</span> <span class="token string">'权亮'</span> <span class="token operator">AND</span> phone <span class="token operator">=</span> '<span class="token number">15204</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-27.png"><br>2）使用左边的 name 字段，可以用到联合索引</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> name<span class="token operator">=</span> <span class="token string">'权亮'</span> <span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-28.png"></p>
+<p>3)使用右边的 phone 字段，无法使用索引，全表扫描</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> phone <span class="token operator">=</span> <span class="token string">'152046618'</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-29.png"></p>
+<h3 id="覆盖索引"><a href="#覆盖索引" class="headerlink" title="覆盖索引"></a>覆盖索引</h3><p>回表：<br>非主键索引，我们先通过索引找到主键索引的键值，再通过主键值查出索引里面没有的数据，它比基于主键索引的查询多扫描了一棵索引树，这个过程就叫回表。</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql">例如：<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> user_innodb <span class="token keyword">where</span> name <span class="token operator">=</span> <span class="token string">'青山'</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-30.png"></p>
+<p>在辅助索引里面，不管是单列索引还是联合索引，如果 select 的数据列只用从索引中就能够取得，不必从数据区中读取，这时候使用的索引就叫做覆盖索引，这样就避免了回表。</p>
+<p>我们先来创建一个联合索引：</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 创建联合索引</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">DROP</span> <span class="token keyword">INDEX</span> comixd_name_phone<span class="token punctuation">;</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">add</span> <span class="token keyword">INDEX</span> <span class="token punctuation">`</span>comixd_name_phone<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>name<span class="token punctuation">`</span><span class="token punctuation">,</span><span class="token punctuation">`</span>phone<span class="token punctuation">`</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>这三个查询语句都用到了覆盖索引</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> name<span class="token punctuation">,</span>phone <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> name<span class="token operator">=</span> <span class="token string">'青山'</span> <span class="token operator">AND</span> phone <span class="token operator">=</span> <span class="token string">' 13666666666'</span><span class="token punctuation">;</span>
+<span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> name <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> name<span class="token operator">=</span> <span class="token string">'青山'</span> <span class="token operator">AND</span> phone <span class="token operator">=</span> <span class="token string">' 13666666666'</span><span class="token punctuation">;</span>
+<span class="token keyword">EXPLAIN</span> <span class="token keyword">SELECT</span> phone <span class="token keyword">FROM</span> user_innodb <span class="token keyword">WHERE</span> name<span class="token operator">=</span> <span class="token string">'青山'</span> <span class="token operator">AND</span> phone <span class="token operator">=</span> <span class="token string">' 13666666666'</span><span class="token punctuation">;</span></code></pre>
+<p>Extra 里面值为“Using index”代表使用了覆盖索引。<br><img src="/images/database/mysql/3-31.png"><br>select * ，用不到覆盖</p>
+<h3 id="索引条件下推"><a href="#索引条件下推" class="headerlink" title="索引条件下推"></a>索引条件下推</h3><p>我们先看这张表，在last_name和first_name上面创建联合索引。</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">drop</span> <span class="token keyword">table</span> employees<span class="token punctuation">;</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span>
+<span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span> <span class="token keyword">date</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">14</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+<span class="token punctuation">`</span>last_name<span class="token punctuation">`</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span> <span class="token keyword">enum</span><span class="token punctuation">(</span><span class="token string">'M'</span><span class="token punctuation">,</span><span class="token string">'F'</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span> <span class="token keyword">date</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>latin1<span class="token punctuation">;</span>
+<span class="token keyword">alter</span> <span class="token keyword">table</span> employees <span class="token keyword">add</span> <span class="token keyword">index</span> idx_lastname_firstname<span class="token punctuation">(</span>last_name<span class="token punctuation">,</span>first_name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'698'</span><span class="token punctuation">,</span> <span class="token string">'liu'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'d99'</span><span class="token punctuation">,</span> <span class="token string">'zheng'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'e08'</span><span class="token punctuation">,</span> <span class="token string">'huang'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'59d'</span><span class="token punctuation">,</span> <span class="token string">'lu'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'0dc'</span><span class="token punctuation">,</span> <span class="token string">'yu'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'989'</span><span class="token punctuation">,</span> <span class="token string">'wang'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">7</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'e38'</span><span class="token punctuation">,</span> <span class="token string">'wang'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'0zi'</span><span class="token punctuation">,</span> <span class="token string">'wang'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">9</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'dc9'</span><span class="token punctuation">,</span> <span class="token string">'xie'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>employees<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>emp_no<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>birth_date<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>first_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>last_name<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>gender<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>hire_date<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token string">'5ba'</span><span class="token punctuation">,</span> <span class="token string">'zhou'</span><span class="token punctuation">,</span> <span class="token string">'F'</span><span class="token punctuation">,</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+
+<p>关闭ICP:</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">set</span> optimizer_switch<span class="token operator">=</span><span class="token string">'index_condition_pushdown=off'</span><span class="token punctuation">;</span></code></pre>
+
+<p>查看参数</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> variables <span class="token operator">like</span> <span class="token string">'optimizer_switch'</span><span class="token punctuation">;</span></code></pre>
+<p>现在我们要查询所有姓 wang，并且名字最后一个字是 zi 的员工，比如王胖子，王瘦子。查询的 SQL：</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> employees <span class="token keyword">where</span> last_name<span class="token operator">=</span><span class="token string">'wang'</span> <span class="token operator">and</span> first_name <span class="token operator">LIKE</span> '<span class="token operator">%</span><span class="token punctuation">;</span></code></pre>
+<p>这条 SQL 有两种执行方式：<br>1、根据联合索引查出所有姓 wang 的二级索引数据，然后回表，到主键索引上查询<br>全部符合条件的数据（3 条数据）。然后返回给 Server 层，在 Server 层过滤出名字以<br>zi 结尾的员工。<br>2、根据联合索引查出所有姓 wang 的二级索引数据（3 个索引），然后从二级索引<br>中筛选出 first_name 以 zi 结尾的索引（1 个索引），然后再回表，到主键索引上查询全<br>部符合条件的数据（1 条数据），返回给 Server 层。<br><img src="/images/database/mysql/3-32.png"><br>很明显，第二种方式到主键索引上查询的数据更少。</p>
+<p>注意，索引的比较是在存储引擎进行的，数据记录的比较，是在 Server 层进行的。而当 first_name 的条件不能用于索引过滤时，Server 层不会把 first_name 的条件传递给存储引擎，所以读取了两条没有必要的记录。</p>
+<p>这时候，如果满足 last_name=’wang’的记录有 100000 条，就会有 99999 条没有必要读取的记录。<br>执行以下SQL</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> employees <span class="token keyword">where</span> last_name<span class="token operator">=</span><span class="token string">'wang'</span> <span class="token operator">and</span> first_name <span class="token operator">LIKE</span> <span class="token string">'%zi'</span><span class="token punctuation">;</span></code></pre>
+<p><img src="/images/database/mysql/3-33.png"><br>Using Where 代表从存储引擎取回的数据不全部满足条件，需要在 Server 层过滤。</p>
+<p>先用 last_name 条件进行索引范围扫描，读取数据表记录，然后进行比较，检查是否符合 first_name LIKE ‘%zi’ 的条件。此时 3 条数据中只要1条符合条件。</p>
+<p>开启ICP</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">set</span> optimizer_switch<span class="token operator">=</span><span class="token string">'index_condition_pushdown=on'</span><span class="token punctuation">;</span></code></pre>
+<p>此时的执行计划，Using index condition：<br><img src="/images/database/mysql/3-34.png"></p>
+<p>把 first_name LIKE ‘%zi’下推给存储引擎后，只会从数据表读取所需的 1 条记录。索引条件下推（Index Condition Pushdown），5.6版本 以后完善的功能。只适用于二<br>级索引。ICP 的目标是减少访问表的完整行的读数量从而减少 I/O 操作</p>
+<h2 id="索引的创建与使用"><a href="#索引的创建与使用" class="headerlink" title="索引的创建与使用"></a>索引的创建与使用</h2><p>因为索引对于改善查询性能的作用是巨大的，所以我们的目标是尽量使用索引。</p>
+<h3 id="索引的创建"><a href="#索引的创建" class="headerlink" title="索引的创建"></a>索引的创建</h3><p>1、在用于 where 判断 order 排序和 join 的（on）字段上创建索引<br>2、索引的个数不要过多<br>——浪费空间，更新变慢。<br>3、区分度低的字段，例如性别，不要建索引。 ——离散度太低，导致扫描行数过多。<br>4、频繁更新的值，不要作为主键或者索引。 ——页分裂<br>5、组合索引把散列性高（区分度高）的值放在前面。<br>6、创建复合索引，而不是修改单列索引。<br>7、过长的字段，怎么建立索引？<br>8、为什么不建议用无序的值（例如身份证、UUID ）作为索引？</p>
+<h3 id="什么时候用不到索引"><a href="#什么时候用不到索引" class="headerlink" title="什么时候用不到索引"></a>什么时候用不到索引</h3><p>1、索引列上使用函数（replace\SUBSTR\CONCAT\sum count avg）、表达式、<br>计算（+ - * /）</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">`</span>t2<span class="token punctuation">`</span> <span class="token keyword">where</span> id<span class="token operator">+</span><span class="token number">1</span> <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span></code></pre>
+<p>2、字符串不加引号，出现隐式转换</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">DROP</span> <span class="token keyword">INDEX</span> comidx_name_phone<span class="token punctuation">;</span>
+<span class="token keyword">ALTER</span> <span class="token keyword">TABLE</span> user_innodb <span class="token keyword">add</span> <span class="token keyword">INDEX</span> comidx_name_phone <span class="token punctuation">(</span>name<span class="token punctuation">,</span>phon</code></pre>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">`</span>user_innodb<span class="token punctuation">`</span> <span class="token keyword">where</span> name <span class="token operator">=</span> <span class="token number">136</span><span class="token punctuation">;</span>
+<span class="token keyword">explain</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">`</span>user_innodb<span class="token punctuation">`</span> <span class="token keyword">where</span> name <span class="token operator">=</span> <span class="token string">'136'</span><span class="token punctuation">;</span></code></pre>
+
+<p>3、like 条件中前面带%<br>where 条件中 like abc%，like %2673%，like %888 都用不到索引吗？为什么？</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span><span class="token keyword">from</span> user_innodb <span class="token keyword">where</span> name <span class="token operator">like</span> <span class="token string">'wang%'</span><span class="token punctuation">;</span>
+<span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span><span class="token keyword">from</span> user_innodb <span class="token keyword">where</span> name <span class="token operator">like</span> <span class="token string">'%wang'</span><span class="token punctuation">;</span></code></pre>
+<p>过滤的开销太大，所以无法使用索引。这个时候可以用全文索引。</p>
+<p>4、负向查询<br>NOT LIKE 不能：</p>
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span><span class="token keyword">from</span> employees <span class="token keyword">where</span> last_name <span class="token operator">not</span> <span class="token operator">like</span> <span class="token string">'wang'</span><span class="token punctuation">;</span></code></pre>
+
+<pre class="language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span><span class="token keyword">from</span> employees <span class="token keyword">where</span> emp_no <span class="token operator">not</span> <span class="token operator">in</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span><span class="token keyword">from</span> employees <span class="token keyword">where</span> emp_no <span class="token operator">&lt;></span> <span class="token number">1</span></code></pre>
+<p>注意一个 SQL 语句是否使用索引，跟数据库版本、数据量、数据选择度都有关系。<br>其实，用不用索引，最终都是优化器说了算。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>MySQL选择B+Tree作为索引的数据结构还是非常巧妙的。</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">徐志</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://spiderxu.gitee.io/p/664e3ec4.html">https://spiderxu.gitee.io/p/664e3ec4.html</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">徐志</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/MySQL/">
+                                    <span class="chip bg-color">MySQL</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/p/8a8ed9e2.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="MySQL索引基本介绍">
+                        
+                        <span class="card-title">MySQL索引基本介绍</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2024-03-31
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-category">
+                                    数据库
+                                </a>
+                            
+                            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/" class="post-category">
+                                    MySQL
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MySQL/">
+                        <span class="chip bg-color">MySQL</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/p/24c94d92.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="Docker安装Redis">
+                        
+                        <span class="card-title">Docker安装Redis</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2024-03-31
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%B7%A5%E5%85%B7%E4%B8%8E%E9%83%A8%E7%BD%B2/" class="post-category">
+                                    工具与部署
+                                </a>
+                            
+                            <a href="/categories/%E5%B7%A5%E5%85%B7%E4%B8%8E%E9%83%A8%E7%BD%B2/Docker/" class="post-category">
+                                    Docker
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Docker/">
+                        <span class="chip bg-color">Docker</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
+
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+
+    <div class="container row center-align"
+         style="margin-bottom: 0px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2019-2024</span>
+            
+            <a href="/about" target="_blank">徐志</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            
+            <br>
+            
+                &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
+                        class="white-color">100k</span>
+            
+            
+            
+                
+            
+            
+                <span id="busuanzi_container_site_pv">
+                &nbsp;|&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;
+                    <span id="busuanzi_value_site_pv" class="white-color"></span>
+            </span>
+            
+            
+                <span id="busuanzi_container_site_uv">
+                &nbsp;|&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;
+                    <span id="busuanzi_value_site_uv" class="white-color"></span>
+            </span>
+            
+            <br>
+
+            <!-- 运行天数提醒. -->
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 白天和黑夜主题 -->
+<div class="stars-con">
+    <div id="stars"></div>
+    <div id="stars2"></div>
+    <div id="stars3"></div>  
+</div>
+
+<script>
+    function switchNightMode() {
+        $('<div class="Cuteen_DarkSky"><div class="Cuteen_DarkPlanet"></div></div>').appendTo($('body')),
+        setTimeout(function () {
+            $('body').hasClass('DarkMode') 
+            ? ($('body').removeClass('DarkMode'), localStorage.setItem('isDark', '0'), $('#sum-moon-icon').removeClass("fa-sun").addClass('fa-moon')) 
+            : ($('body').addClass('DarkMode'), localStorage.setItem('isDark', '1'), $('#sum-moon-icon').addClass("fa-sun").removeClass('fa-moon')),
+            
+            setTimeout(function () {
+            $('.Cuteen_DarkSky').fadeOut(1e3, function () {
+                $(this).remove()
+            })
+            }, 2e3)
+        })
+    }
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    
+
+    
+    
+    
+
+    <!-- 雪花特效 -->
+    
+
+    <!-- 鼠标星星特效 -->
+    
+
+     
+        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
+        <script src="/libs/others/TencentCaptcha.js"></script>
+        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
+    
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    <script src="/libs/others/clicklove.js" async="async"></script>
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+    <!--腾讯兔小巢-->
+    
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
