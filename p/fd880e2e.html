@@ -401,7 +401,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    2.8k
+                    3k
                 </div>
                 
 
@@ -427,7 +427,15 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>由于默认情况下多线程执行任务都是异步的，且线程之间任务执行没有先后顺序，都是哪个线程先抢到任务，哪个线程先执行，所以当一个业务请求需要多线程完成(假如需要 A、B、C 三个线程)且线程AB之间存在前后的依赖关系，而C线程和AB线程无关(例如：A线程启动依赖于B线程的执行返回结果，C线程自个玩) ，所以A和B线程就需要线程编排。来使AB线程执行由原先的并行变为串行；多线程异步编排可以根据线程之间的依赖关系来规划线程之间的执行先后循序。</p>
-<h2 id="CompletableFuture异步编排"><a href="#CompletableFuture异步编排" class="headerlink" title="CompletableFuture异步编排"></a>CompletableFuture异步编排</h2><h3 id="1、CompletetableFuture介绍"><a href="#1、CompletetableFuture介绍" class="headerlink" title="1、CompletetableFuture介绍"></a>1、CompletetableFuture介绍</h3><h3 id="2、创建异步对象"><a href="#2、创建异步对象" class="headerlink" title="2、创建异步对象"></a>2、创建异步对象</h3><p>CompletableFuture 提供了四个静态方法来创建一个异步操作。</p>
+<h2 id="CompletableFuture异步编排"><a href="#CompletableFuture异步编排" class="headerlink" title="CompletableFuture异步编排"></a>CompletableFuture异步编排</h2><h3 id="1、CompletetableFuture介绍"><a href="#1、CompletetableFuture介绍" class="headerlink" title="1、CompletetableFuture介绍"></a>1、CompletetableFuture介绍</h3><ul>
+<li>CompletableFuture是Java8中提供的Future的扩展功能，简化异步编程的复杂性;</li>
+<li>引入函数式编程，通过回调的方式处理计算结果，也提供了转换和组合的方法;</li>
+<li>它实现了Future和CompletionStage接口;</li>
+<li>借助CompletionStage的方法可以实现链式调用;</li>
+<li>一个CompletetableFuture就代表了一个任务，可以用then，when等操作来防止阻塞和轮询isDone的现象出现;</li>
+<li>它可能代表一个明确完成的Future，也有可能代表一个完成阶段（ CompletionStage ），它支持在计算完成以后触发一些函数或执行某些动作;</li>
+</ul>
+<h3 id="2、创建异步对象"><a href="#2、创建异步对象" class="headerlink" title="2、创建异步对象"></a>2、创建异步对象</h3><p>CompletableFuture 提供了四个静态方法来创建一个异步操作。</p>
 <pre class="language-java" data-language="java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> <span class="token class-name">CompletableFuture</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> <span class="token function">supplyAsync</span><span class="token punctuation">(</span><span class="token class-name">Supplier</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> supplier<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> <span class="token class-name">CompletableFuture</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> <span class="token function">supplyAsync</span><span class="token punctuation">(</span><span class="token class-name">Supplier</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">U</span><span class="token punctuation">></span></span> supplier<span class="token punctuation">,</span><span class="token class-name">Executor</span> executor<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token class-name">CompletableFuture</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Void</span><span class="token punctuation">></span></span> <span class="token function">runAsync</span><span class="token punctuation">(</span><span class="token class-name">Runnable</span> runnable<span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -791,6 +799,9 @@
        anyOf<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
        <span class="token class-name">System</span><span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"执行完毕任务的返回值:"</span> <span class="token operator">+</span> anyOf<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
    <span class="token punctuation">&#125;</span></code></pre>
+
+<p><img src="/images/lianxiwo.png" alt="联系我"></p>
+
                 
             </div>
             <hr/>
@@ -1176,7 +1187,7 @@
             <br>
             
                 &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                        class="white-color">105.4k</span>
+                        class="white-color">105.5k</span>
             
             
             
